@@ -13,7 +13,7 @@ import {
   I18nManager,
 } from 'react-native';
 import Ripple from 'react-native-material-ripple';
-import { TextField } from 'react-native-material-textfield';
+import { TextField } from '@anasmasood94/react-native-material-textfield';
 
 import DropdownItem from '../item';
 import styles from './styles';
