@@ -83,10 +83,15 @@ export default class Dropdown extends PureComponent {
 
     disabled: PropTypes.bool,
 
-    value: PropTypes.oneOfType([
+    value: PropTypes.arrayOf(PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+    ])) || PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number,
     ]),
+
+    multiple: PropTypes.bool,
 
     data: PropTypes.arrayOf(PropTypes.object),
 
@@ -157,6 +162,7 @@ export default class Dropdown extends PureComponent {
     super(props);
 
     this.onPress = this.onPress.bind(this);
+    this.getValue = this.getValue.bind(this);
     this.onClose = this.onClose.bind(this);
     this.onSelect = this.onSelect.bind(this);
     this.onLayout = this.onLayout.bind(this);
@@ -313,6 +319,25 @@ export default class Dropdown extends PureComponent {
     });
   }
 
+  getValue(newValue) {
+    let { multiple } = this.props;
+    let { value } = this.state;
+    if (multiple) {
+      value = value || []
+      if ( value.includes(newValue) ) {
+        let index = value.indexOf(newValue);
+        value.splice(index, 1)
+      }
+      else {
+        value.push(newValue)
+      }
+      return value;
+    }
+    else{
+      return newValue || value;
+    }
+  }
+
   onClose(value = this.state.value) {
     let { onBlur, animationDuration, useNativeDriver } = this.props;
     let { opacity } = this.state;
@@ -343,10 +368,18 @@ export default class Dropdown extends PureComponent {
       onChangeText,
       animationDuration,
       rippleDuration,
+      multiple,
     } = this.props;
 
-    let value = valueExtractor(data[index], index);
+    let value;
     let delay = Math.max(0, rippleDuration - animationDuration);
+
+    if (multiple) {
+      value = this.getValue(data[index]);
+    }
+    else {
+      value = this.getValue(valueExtractor(data[index], index));
+    }
 
     if ('function' === typeof onChangeText) {
       onChangeText(value, index, data);
@@ -480,26 +513,37 @@ export default class Dropdown extends PureComponent {
       labelExtractor,
       dropdownOffset,
       renderAccessory = this.renderAccessory,
+      multiple,
     } = this.props;
 
     let index = this.selectedIndex();
     let title;
 
-    if (~index) {
-      title = labelExtractor(data[index], index);
+    if ( multiple && value.length > 0) {
+      title = ""
+      value.forEach((item) => {
+        if ( title != "" ) title += ", "
+        title += item.label 
+      })
     }
+    
+    else {
+      if (~index) {
+        title = labelExtractor(data[index], index);
+      }
 
-    if (null == title) {
-      title = value;
+      if (null == title) {
+        title = value;
+      }
+
+      if ('function' === typeof renderBase) {
+        return renderBase({ ...props, title, value, renderAccessory });
+      }
+
+      title = null == title || 'string' === typeof title?
+        title:
+        String(title);
     }
-
-    if ('function' === typeof renderBase) {
-      return renderBase({ ...props, title, value, renderAccessory });
-    }
-
-    title = null == title || 'string' === typeof title?
-      title:
-      String(title);
 
     return (
       <TextField
@@ -567,6 +611,7 @@ export default class Dropdown extends PureComponent {
     }
 
     let { selected, leftInset, rightInset } = this.state;
+    let stateValue = this.state.value;
 
     let {
       valueExtractor,
@@ -582,6 +627,8 @@ export default class Dropdown extends PureComponent {
       rippleOpacity,
       rippleDuration,
       shadeOpacity,
+      data,
+      multiple,
     } = this.props;
 
     let props = propsExtractor(item, index);
@@ -616,7 +663,10 @@ export default class Dropdown extends PureComponent {
           itemColor:
         selectedItemColor;
 
-    let textStyle = { color, fontSize };
+    let fontWeight = multiple && stateValue.includes(item) ?
+      'bold' : 'normal'      
+      
+    let textStyle = { color, fontSize, fontWeight };
 
     props.style = [
       style,

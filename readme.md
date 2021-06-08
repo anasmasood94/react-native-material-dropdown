@@ -32,14 +32,14 @@ Material dropdown with consistent behaviour on iOS and Android
 ## Installation
 
 ```bash
-npm install --save react-native-material-dropdown
+npm install --save @anasmasood94/react-native-material-dropdown
 ```
 
 ## Usage
 
 ```javascript
 import React, { Component } from 'react';
-import { Dropdown } from 'react-native-material-dropdown';
+import { Dropdown } from '@anasmasood94/react-native-material-dropdown';
 
 class Example extends Component {
   render() {
@@ -113,7 +113,7 @@ Other [TextField][textfield], [TextInput][textinput] and [TouchableWithoutFeedba
 ## Example
 
 ```bash
-git clone https://github.com/n4kz/react-native-material-dropdown
+git clone https://github.com/anasmasood94/react-native-material-dropdown.git
 cd react-native-material-dropdown/example
 npm install
 npm run ios # or npm run android
