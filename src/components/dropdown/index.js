@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import Ripple from 'react-native-material-ripple';
 import { TextField } from 'react-native-material-textfield';
+import Chip from '../chip'; 
 
 import DropdownItem from '../item';
 import styles from './styles';
@@ -83,10 +84,15 @@ export default class Dropdown extends PureComponent {
 
     disabled: PropTypes.bool,
 
-    value: PropTypes.oneOfType([
+    value: PropTypes.arrayOf(PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+    ])) || PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number,
     ]),
+
+    multiple: PropTypes.bool,
 
     data: PropTypes.arrayOf(PropTypes.object),
 
@@ -159,9 +165,11 @@ export default class Dropdown extends PureComponent {
     super(props);
 
     this.onPress = this.onPress.bind(this);
+    this.getValue = this.getValue.bind(this);
     this.onClose = this.onClose.bind(this);
     this.onSelect = this.onSelect.bind(this);
     this.onLayout = this.onLayout.bind(this);
+    this.removeValueByIndex = this.removeValueByIndex.bind(this);
 
     this.updateRippleRef = this.updateRef.bind(this, 'ripple');
     this.updateContainerRef = this.updateRef.bind(this, 'container');
@@ -338,6 +346,24 @@ export default class Dropdown extends PureComponent {
       });
   }
 
+  getValue(newValue) {
+    let { multiple } = this.props;
+    let { value } = this.state;
+    
+    if (multiple) {
+      value = value || []
+      
+      if ( !value.includes(newValue) ) {
+        value.push(newValue)
+      }
+
+      return value;
+    }
+    else{
+      return newValue || value;
+    }
+  }
+
   onSelect(index) {
     let {
       data,
@@ -345,10 +371,18 @@ export default class Dropdown extends PureComponent {
       onChangeText,
       animationDuration,
       rippleDuration,
+      multiple,
     } = this.props;
 
-    let value = valueExtractor(data[index], index);
+    let value;
     let delay = Math.max(0, rippleDuration - animationDuration);
+
+    if (multiple) {
+      value = this.getValue(data[index]);
+    }
+    else {
+      value = this.getValue(valueExtractor(data[index], index));
+    }
 
     if ('function' === typeof onChangeText) {
       onChangeText(value, index, data);
@@ -474,6 +508,42 @@ export default class Dropdown extends PureComponent {
     return `${index}-${valueExtractor(item, index)}`;
   }
 
+  removeValueByIndex(index) { 
+    let { value } = this.state; 
+    const {   
+      rippleDuration,   
+      animationDuration   
+    } = this.props; 
+      
+    let delay = Math.max(0, rippleDuration - animationDuration);  
+    value.splice(index, 1); 
+    console.log(index)  
+    this.setState({ value })  
+  } 
+
+  renderMulipleBase() { 
+    const { value } = this.state; 
+    return (  
+      <View style={{  
+        flex: 1,  
+        flexDirection: 'row', 
+        flexWrap: 'wrap', 
+        marginTop: 10 
+      }}> 
+        { 
+          value.map((item, index) =>  
+            <Chip   
+              text={item.label}   
+              onClose={() => this.removeValueByIndex(index)}  
+              key={index}   
+            />  
+          ) 
+        } 
+        {this.renderAccessory(styles.multipleAccessory)}  
+      </View> 
+    );  
+  }
+
   renderBase(props) {
     let { value } = this.state;
     let {
@@ -568,6 +638,7 @@ export default class Dropdown extends PureComponent {
     }
 
     let { selected, leftInset, rightInset } = this.state;
+    let stateValue = this.state.value;
 
     let {
       valueExtractor,
@@ -583,6 +654,8 @@ export default class Dropdown extends PureComponent {
       rippleOpacity,
       rippleDuration,
       shadeOpacity,
+      data,
+      multiple,
     } = this.props;
 
     let props = propsExtractor(item, index);
@@ -617,7 +690,10 @@ export default class Dropdown extends PureComponent {
           itemColor:
         selectedItemColor;
 
-    let textStyle = { color, fontSize };
+    let fontWeight = multiple && stateValue.includes(item) ?
+      'bold' : 'normal'      
+      
+    let textStyle = { color, fontSize, fontWeight };
 
     props.style = [
       style,
@@ -656,6 +732,7 @@ export default class Dropdown extends PureComponent {
       nativeID,
       accessible,
       accessibilityLabel,
+      multiple,
 
       supportedOrientations,
 
@@ -718,6 +795,7 @@ export default class Dropdown extends PureComponent {
       hitSlop,
       pressRetentionOffset,
       onPress: this.onPress,
+      disallowInterruption: true,
       testID,
       nativeID,
       accessible,
@@ -728,7 +806,12 @@ export default class Dropdown extends PureComponent {
       <View onLayout={this.onLayout} ref={this.updateContainerRef} style={containerStyle}>
         <TouchableWithoutFeedback {...touchableProps}>
           <View pointerEvents='box-only'>
-            {this.renderBase(props)}
+            { 
+              multiple ? 
+                this.renderMulipleBase() 
+              :
+                this.renderBase(props) 
+            }
             {this.renderRipple()}
           </View>
         </TouchableWithoutFeedback>
