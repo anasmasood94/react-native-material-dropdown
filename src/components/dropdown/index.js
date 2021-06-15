@@ -535,15 +535,15 @@ export default class Dropdown extends PureComponent {
       if (null == title) {
         title = value;
       }
-
-      if ('function' === typeof renderBase) {
-        return renderBase({ ...props, title, value, renderAccessory });
-      }
-
-      title = null == title || 'string' === typeof title?
-        title:
-        String(title);
     }
+
+    if ('function' === typeof renderBase) {
+      return renderBase({ ...props, title, value, renderAccessory });
+    }
+
+    title = null == title || 'string' === typeof title?
+      title:
+      String(title);
 
     return (
       <TextField
